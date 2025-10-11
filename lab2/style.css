@@ -1,0 +1,245 @@
+/* Общие стили и сброс */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f7f6;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Шапка */
+.header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: #fff;
+    padding: 2rem 0;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2.5rem;
+}
+
+.header p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+}
+
+/* Основной контент */
+.main {
+    flex-grow: 1;
+    padding: 2rem 0;
+}
+
+.controls-section,
+.image-processing-section,
+.histograms-section {
+    background-color: #ffffff;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 2rem;
+}
+
+.controls-section h2,
+.image-processing-section h2,
+.histograms-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #007bff;
+    font-size: 2rem;
+}
+
+/* Загрузка изображения */
+.image-upload {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+    flex-wrap: wrap; /* Для адаптивности */
+}
+
+#imageUploader {
+    display: none; /* Скрываем стандартный input file */
+}
+
+.upload-button {
+    background-color: #28a745;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+    white-space: nowrap; /* Предотвратить перенос текста */
+}
+
+.upload-button:hover {
+    background-color: #218838;
+}
+
+#fileName {
+    font-style: italic;
+    color: #555;
+    white-space: nowrap; /* Предотвратить перенос текста */
+    overflow: hidden; /* Обрезать текст, если не помещается */
+    text-overflow: ellipsis; /* Добавить многоточие */
+    max-width: 250px; /* Ограничить ширину */
+}
+
+.default-images {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.default-img-button {
+    background-color: #6c757d;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+}
+
+.default-img-button:hover {
+    background-color: #5a6268;
+}
+
+/* Сетка для изображений и гистограмм */
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Адаптивная сетка */
+    gap: 2rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+.image-item {
+    background-color: #f9f9f9;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Выравнивание элементов по верху */
+}
+
+.image-item h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #007bff;
+    font-size: 1.3rem;
+}
+
+.image-item canvas {
+    border: 1px solid #ddd;
+    background-color: #fff;
+    width: 100%; /* Занимаем всю доступную ширину */
+    max-width: 300px; /* Ограничиваем максимальный размер */
+    height: auto; /* Сохраняем пропорции */
+    display: block; /* Убираем лишние отступы */
+    margin: 0 auto;
+}
+
+/* Стили для ползунков */
+input[type="range"] {
+    -webkit-appearance: none; /* Убираем дефолтные стили браузера */
+    width: 80%;
+    height: 8px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+    border-radius: 5px;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+input[type="range"]:hover {
+    opacity: 1;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Футер */
+.footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 1.5rem 0;
+    margin-top: auto; /* Прижимает футер к низу страницы */
+    font-size: 0.9rem;
+}
+
+/* Медиа-запросы для адаптивности */
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2rem;
+    }
+
+    .header p {
+        font-size: 1rem;
+    }
+
+    .controls-section h2,
+    .image-processing-section h2,
+    .histograms-section h2 {
+        font-size: 1.6rem;
+    }
+
+    .image-grid {
+        grid-template-columns: 1fr; /* Одна колонка на маленьких экранах */
+    }
+
+    .image-upload {
+        flex-direction: column;
+    }
+
+    .upload-button, .default-img-button {
+        width: 100%;
+        max-width: 250px;
+    }
+}

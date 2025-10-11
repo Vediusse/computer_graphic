@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обработка изображений - Лабораторная работа по компьютерной графике</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header">
+    <div class="container">
+        <h1>Обработка изображений</h1>
+        <p>Лабораторная работа по алгоритмам компьютерной графики</p>
+    </div>
+</header>
+
+<main class="main">
+    <div class="container">
+        <div class="controls-section">
+            <h2>Загрузка изображения</h2>
+            <div class="image-upload">
+                <input type="file" id="imageUploader" accept="image/*">
+                <label for="imageUploader" class="upload-button">Загрузить изображение</label>
+                <span id="fileName">Изображение не выбрано</span>
+            </div>
+            <div class="default-images">
+                <button class="default-img-button" data-src="images/default1.jpg">Демо 1</button>
+                <button class="default-img-button" data-src="images/default2.jpg">Демо 2</button>
+                <button class="default-img-button" data-src="images/img1.jpg">Своя 1</button>
+                <button class="default-img-button" data-src="images/img2.jpg">Своя 2</button>
+            </div>
+        </div>
+
+        <div class="image-processing-section">
+            <h2>Результаты обработки</h2>
+
+            <div class="image-grid">
+                <!-- Оригинальное изображение -->
+                <div class="image-item">
+                    <h3>Оригинал</h3>
+                    <canvas id="originalCanvas"></canvas>
+                </div>
+
+                <!-- Ч/Б изображение -->
+                <div class="image-item">
+                    <h3>Чёрно-белое</h3>
+                    <canvas id="grayscaleCanvas"></canvas>
+                </div>
+
+                <!-- Яркость -->
+                <div class="image-item">
+                    <h3>Яркость</h3>
+                    
+                    <canvas id="brightnessCanvas"></canvas>
+                    <input type="range" id="brightnessSlider" min="-100" max="100" value="0">
+                </div>
+
+                <!-- Контраст -->
+                <div class="image-item">
+                    <h3>Контраст</h3>
+                    
+                    <canvas id="contrastCanvas"></canvas>
+                    <input type="range" id="contrastSlider" min="-100" max="100" value="0">
+                </div>
+            </div>
+
+            <div class="histograms-section">
+                <h2>Гистограммы</h2>
+                <div class="image-grid">
+                    <div class="image-item">
+                        <h3>Оригинал</h3>
+                        <canvas id="originalHistogramCanvas"></canvas>
+                    </div>
+                    <div class="image-item">
+                        <h3>Ч/Б</h3>
+                        <canvas id="grayscaleHistogramCanvas"></canvas>
+                    </div>
+                    <div class="image-item">
+                        <h3>Яркость</h3>
+                        <canvas id="brightnessHistogramCanvas"></canvas>
+                    </div>
+                    <div class="image-item">
+                        <h3>Контраст</h3>
+                        <canvas id="contrastHistogramCanvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2025 Лабораторная работа по компьютерной графике</p>
+    </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
