@@ -35,70 +35,45 @@ class IlluminationCalculator:
             Двумерный массив с рассчитанными значениями освещенности.
         """
 
-        # Создаем сетку точек для расчета
-        x_coords = np.linspace(x_min, x_max, width_res)
-        y_coords = np.linspace(y_min, y_max, height_res)
+        # *** Преобразуем все миллиметры в метры для корректного расчета Вт/м^2 ***
+        x_min_m, y_min_m = x_min / 1000, y_min / 1000
+        x_max_m, y_max_m = x_max / 1000, y_max / 1000
 
-        # Создаем 2D сетку координат для каждой точки
-        # Meshgrid возвращает массивы X и Y, где X - это x_coords повторяющийся по строкам,
-        # а Y - это y_coords повторяющийся по столбцам.
-        # Мы хотим, чтобы Y соответствовал строкам изображения, X - столбцам.
-        # Традиционно imshow отображает так, что строки - это Y, столбцы - это X.
-        # Поэтому Y должен меняться по вертикали, X по горизонтали.
-        # Для удобства представления итогового изображения,
-        # часто ось Y в изображении (строки) соответствует y_coords,
-        # а ось X (столбцы) соответствует x_coords.
-        # Поэтому мы поменяем местами x_coords и y_coords для meshgrid.
-        # Или, если Y идет сверху вниз в изображении, то y_coords должен быть инвертирован.
-        # Давайте сделаем так: Y_grid - это Y координаты для каждой строки, X_grid - для каждого столбца.
+        light_pos_x_m, light_pos_y_m, light_pos_z_m = \
+            light_pos_x / 1000, light_pos_y / 1000, light_pos_z / 1000
 
-        # Так как в изображении y-координата обычно растет вниз,
-        # а в декартовой системе вверх, имеет смысл инвертировать y_coords для более интуитивной визуализации
-        # или просто принять, что нижняя часть изображения это y_min.
-        # Для данной задачи не сказано о направлении Y, так что пусть y_min будет снизу.
-        # Это значит, что y_coords будет от y_min до y_max.
+        circle_center_x_m, circle_center_y_m = \
+            circle_center_x / 1000, circle_center_y / 1000
+        circle_radius_m = circle_radius / 1000
 
-        # Более правильный подход для imshow:
-        # X - столбцы (width_res), Y - строки (height_res)
-        # Поэтому X_grid будет иметь размер (height_res, width_res)
-        # Y_grid будет иметь размер (height_res, width_res)
-        X_grid, Y_grid = np.meshgrid(x_coords, y_coords)  # Y_grid[i,j] - y-coord для i-ой строки, j-го столбца
+        x_coords_m = np.linspace(x_min_m, x_max_m, width_res)
+        y_coords_m = np.linspace(y_min_m, y_max_m, height_res)
+
+        # Создаем 2D сетку координат. Y_grid соответствует строкам, X_grid - столбцам.
+        X_grid_m, Y_grid_m = np.meshgrid(x_coords_m, y_coords_m)
 
         illumination_map = np.zeros((height_res, width_res))
 
-        # Проверка на Z_L (должно быть > 0)
-        if light_pos_z <= 0:
+        if light_pos_z_m <= 0:
             raise ValueError("Координата Z источника света (zL) должна быть строго больше нуля.")
 
-        # Расчет для каждой точки в сетке
-        # Используем векторизованные операции NumPy для скорости
-        dx = X_grid - light_pos_x
-        dy = Y_grid - light_pos_y
-        dz = -light_pos_z  # Расстояние по Z от плоскости до источника, если плоскость Z=0
+        dx_m = X_grid_m - light_pos_x_m
+        dy_m = Y_grid_m - light_pos_y_m
+        dz_sq_m = light_pos_z_m ** 2  # dz - это zL
 
-        # Расстояние от источника до каждой точки
-        r_squared = dx ** 2 + dy ** 2 + dz ** 2
-        r = np.sqrt(r_squared)
+        # Расстояние от источника до каждой точки на плоскости (в метрах)
+        r_squared_m = dx_m ** 2 + dy_m ** 2 + dz_sq_m
+        r_m = np.sqrt(r_squared_m)
 
-        # Косинус угла падения (zL / r)
-        # Добавляем маленькое значение к r_squared, чтобы избежать деления на ноль,
-        # хотя в данном случае r_squared не будет нулем, если zL > 0.
-        cos_theta = light_pos_z / r
+        # Расчет освещенности E = I0 * zL / r^3 (все в метрах, результат Вт/м^2)
+        # Избегаем деления на ноль, так как r > 0 (так как zL > 0)
+        illumination_map = (light_intensity_I0 * light_pos_z_m) / (r_m ** 3)
 
-        # Расчет освещенности
-        # E = I0 * cos(theta) / r^2 = I0 * (zL / r) / r^2 = I0 * zL / r^3
-        # Избегаем деления на ноль, если r_squared = 0 (что не произойдет, если zL > 0)
-        # Для r=0 illumination будет бесконечным, но мы контролируем zL > 0,
-        # поэтому r всегда будет > 0.
-        illumination_map = (light_intensity_I0 * light_pos_z) / (r ** 3)
+        # Применение круговой маски (координаты круга тоже в метрах)
+        dist_to_center_squared_m = (X_grid_m - circle_center_x_m) ** 2 + \
+                                   (Y_grid_m - circle_center_y_m) ** 2
 
-        # Применение круговой маски
-        # Расстояние от каждой точки до центра круга
-        dist_to_center_squared = (X_grid - circle_center_x) ** 2 + \
-                                 (Y_grid - circle_center_y) ** 2
-
-        # Если точка вне круга, освещенность = 0
-        illumination_map[dist_to_center_squared > circle_radius ** 2] = 0
+        illumination_map[dist_to_center_squared_m > circle_radius_m ** 2] = 0
 
         return illumination_map
 
@@ -118,39 +93,77 @@ class IlluminationCalculator:
         """
         max_val = np.max(illumination_map)
         if max_val == 0:
-            return np.zeros_like(illumination_map, dtype=np.uint8)  # Если все нули, возвращаем все нули
+            return np.zeros_like(illumination_map, dtype=np.uint8)
 
         normalized_map = (illumination_map / max_val) * 255
         return normalized_map.astype(np.uint8)
 
-    def get_cross_section(self, illumination_map, circle_center_x_px, circle_center_y_px, width_res, height_res):
+    def get_cross_section(self, image_array, Wres, Hres, axis='horizontal'):
         """
-        Получает данные для графика сечения через центр заданной области.
-        Сечение берется по горизонтали или вертикали через центр.
-
+        Извлекает горизонтальное или вертикальное сечение через центр изображения.
         Параметры:
-        ----------
-        illumination_map : numpy.ndarray
-            Массив освещенности.
-        circle_center_x_px, circle_center_y_px : int
-            Координаты центра круга в пикселях.
-        width_res, height_res : int
-            Разрешение изображения по ширине и высоте в пикселях.
-
+            image_array: 2D numpy массив изображения (нормированная освещенность).
+            Wres, Hres: разрешение сетки.
+            axis: 'horizontal' для горизонтального сечения (Y=0), 'vertical' для вертикального (X=0).
         Возвращает:
-        ----------
-        tuple: (numpy.ndarray, numpy.ndarray)
-            Массив значений освещенности вдоль сечения и соответствующие x-координаты.
+            (numpy.ndarray, numpy.ndarray): Данные сечения и соответствующие координаты.
         """
+        if image_array is None or Wres == 0 or Hres == 0:
+            return np.array([]), np.array([])
 
-        # Мы можем взять сечение через центр области изображения, а не обязательно через центр круга.
-        # "график сечения, проходящего через центр заданной области"
-        # Центр заданной области (в пикселях) это (width_res // 2, height_res // 2)
+        if axis == 'horizontal':
+            center_row_index = Hres // 2
+            section_data = image_array[center_row_index, :]
+            section_coords = np.arange(Wres)
+        elif axis == 'vertical':
+            center_col_index = Wres // 2
+            section_data = image_array[:, center_col_index]
+            section_coords = np.arange(Hres)
+        else:
+            raise ValueError("Параметр 'axis' должен быть 'horizontal' или 'vertical'.")
 
-        center_row = height_res // 2
-        center_col = width_res // 2
+        return section_data, section_coords
 
-        # Горизонтальное сечение
-        horizontal_section = illumination_map[center_row, :]
+    def calculate_point_illumination(self, x_p, y_p, z_p,
+                                     light_pos_x, light_pos_y, light_pos_z,
+                                     light_intensity_I0,
+                                     circle_center_x, circle_center_y, circle_radius):
+        """
+        Рассчитывает освещенность в одной конкретной точке (на плоскости Z=0),
+        если она находится в круге.
+        Все входные координаты в мм, конвертируются в метры для расчета.
+        """
+        # *** Преобразуем все миллиметры в метры ***
+        x_p_m, y_p_m, z_p_m = x_p / 1000, y_p / 1000, z_p / 1000  # z_p всегда 0 для точки на плоскости
+        light_pos_x_m, light_pos_y_m, light_pos_z_m = \
+            light_pos_x / 1000, light_pos_y / 1000, light_pos_z / 1000
+        circle_center_x_m, circle_center_y_m = \
+            circle_center_x / 1000, circle_center_y / 1000
+        circle_radius_m = circle_radius / 1000
 
-        return horizontal_section, np.arange(width_res)
+        if light_pos_z_m <= 0:
+            return 0.0  # Источник под плоскостью или на ней
+
+        # Проверка, находится ли точка в круге (координаты круга тоже в метрах)
+        dist_to_circle_center_squared_m = (x_p_m - circle_center_x_m) ** 2 + \
+                                          (y_p_m - circle_center_y_m) ** 2
+        if dist_to_circle_center_squared_m > circle_radius_m ** 2:
+            return 0.0  # Точка вне круга
+
+        # Расстояние от источника (light_pos_x_m, light_pos_y_m, light_pos_z_m)
+        # до точки на плоскости (x_p_m, y_p_m, 0)
+
+        # Расстояние по X, Y на плоскости, и расстояние по Z до плоскости
+        dx_m = x_p_m - light_pos_x_m
+        dy_m = y_p_m - light_pos_y_m
+        # Здесь dz - это просто light_pos_z_m, потому что точка находится на Z=0
+        # и расстояние по Z от источника до плоскости - это light_pos_z_m
+        dz_m = light_pos_z_m
+
+        r_plane_m = np.sqrt(dx_m ** 2 + dy_m ** 2 + dz_m ** 2)
+
+        if r_plane_m == 0:  # Точка совпадает с проекцией источника на плоскость Z=0 (если zL=0), но мы уже проверили zL > 0
+            return float('inf')  # Или какое-то очень большое число, если источник прямо над точкой
+
+        # E = I0 * zL / r_plane^3
+        return (light_intensity_I0 * light_pos_z_m) / (r_plane_m ** 3)

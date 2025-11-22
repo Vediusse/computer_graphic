@@ -1,7 +1,11 @@
-import tkinter as tk
+import sys
 from gui import IlluminationApp
+from PyQt6.QtWidgets import (
+    QApplication
+)
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = IlluminationApp(root)
-    root.mainloop()
+    app = QApplication(sys.argv)
+    window = IlluminationApp()
+    window.show()
+    sys.exit(app.exec())
