@@ -134,7 +134,7 @@ class IlluminationCalculator:
         Все входные координаты в мм, конвертируются в метры для расчета.
         """
         # *** Преобразуем все миллиметры в метры ***
-        x_p_m, y_p_m, z_p_m = x_p / 1000, y_p / 1000, z_p / 1000  # z_p всегда 0 для точки на плоскости
+        x_p_m, y_p_m, z_p_m = x_p / 1000, y_p / 1000, z_p / 1000
         light_pos_x_m, light_pos_y_m, light_pos_z_m = \
             light_pos_x / 1000, light_pos_y / 1000, light_pos_z / 1000
         circle_center_x_m, circle_center_y_m = \

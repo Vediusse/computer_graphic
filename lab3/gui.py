@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from PIL import Image
+from mpl_toolkits.mplot3d import Axes3D  # Уже импортировано
 
 # Убедитесь, что illumination_calculator.py находится в том же каталоге
 # или доступен в PYTHONPATH
@@ -20,7 +21,7 @@ class IlluminationApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Расчет Освещенности от Точечного Источника (PyQt6)")
-        self.setGeometry(100, 100, 800, 900)  # Вернемся к более простому начальному размеру окна
+        self.setGeometry(100, 100, 800, 950)  # Немного увеличим высоту для 3D графика
 
         self.calculator = IlluminationCalculator()
         self.raw_illumination_data = None
@@ -101,53 +102,68 @@ class IlluminationApp(QMainWindow):
         content_layout = QVBoxLayout()
 
         # 1. Фрейм для изображения освещенности
-        image_group = QGroupBox("Распределение Освещенности")
+        image_group = QGroupBox("Распределение Освещенности (2D)")
         image_layout = QVBoxLayout(image_group)
         self.image_label = QLabel("Изображение будет здесь")
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.image_label.setFixedSize(500, 500)  # Фиксированный квадратный размер изображения
-        self.image_label.setScaledContents(True)  # Важно для масштабирования содержимого
+        self.image_label.setFixedSize(500, 500)
+        self.image_label.setScaledContents(True)
         image_layout.addWidget(self.image_label)
         content_layout.addWidget(image_group)
 
         # 2. Фрейм для первого графика (Горизонтальное Сечение)
         section_group_horiz = QGroupBox("График Горизонтального Сечения")
         section_layout_horiz = QVBoxLayout(section_group_horiz)
-        self.fig_section_horiz = plt.Figure(figsize=(6, 4), dpi=100)  # Размер фигуры matplotlib
+        self.fig_section_horiz = plt.Figure(figsize=(6, 4), dpi=100)
         self.ax_section_horiz = self.fig_section_horiz.add_subplot(111)
         self.ax_section_horiz.set_xlabel("Пиксели по горизонтали")
         self.ax_section_horiz.set_ylabel("Нормированная освещенность")
         self.ax_section_horiz.set_title("Горизонтальное сечение (Y=0)")
         self.section_canvas_horiz = FigureCanvas(self.fig_section_horiz)
-        self.section_canvas_horiz.setFixedSize(600, 400)  # Фиксированный размер для холста графика
+        self.section_canvas_horiz.setFixedSize(600, 400)
         section_layout_horiz.addWidget(self.section_canvas_horiz)
         content_layout.addWidget(section_group_horiz)
 
         # 3. Фрейм для второго графика (Вертикальное Сечение)
         section_group_vert = QGroupBox("График Вертикального Сечения")
         section_layout_vert = QVBoxLayout(section_group_vert)
-        self.fig_section_vert = plt.Figure(figsize=(6, 4), dpi=100)  # Размер фигуры matplotlib
+        self.fig_section_vert = plt.Figure(figsize=(6, 4), dpi=100)
         self.ax_section_vert = self.fig_section_vert.add_subplot(111)
         self.ax_section_vert.set_xlabel("Пиксели по вертикали")
         self.ax_section_vert.set_ylabel("Нормированная освещенность")
         self.ax_section_vert.set_title("Вертикальное сечение (X=0)")
         self.section_canvas_vert = FigureCanvas(self.fig_section_vert)
-        self.section_canvas_vert.setFixedSize(600, 400)  # Фиксированный размер для холста графика
+        self.section_canvas_vert.setFixedSize(600, 400)
         section_layout_vert.addWidget(self.section_canvas_vert)
         content_layout.addWidget(section_group_vert)
 
-        # 4. Фрейм для статистики
+        # 4. Фрейм для 3D графика освещенности
+        illum3d_group = QGroupBox("3D Распределение Освещенности")
+        illum3d_layout = QVBoxLayout(illum3d_group)
+        self.fig_illum3d = plt.Figure(figsize=(7, 6), dpi=100)  # Чуть больше для 3D
+
+        self.ax_illum3d = self.fig_illum3d.add_subplot(111, projection='3d')
+        self.ax_illum3d.set_xlabel("X (мм)")
+        self.ax_illum3d.set_ylabel("Y (мм)")
+        self.ax_illum3d.set_zlabel("Освещенность (Вт/м²)")
+        self.ax_illum3d.set_title("3D Распределение Освещенности")
+        self.illum3d_canvas = FigureCanvas(self.fig_illum3d)
+        self.illum3d_canvas.setFixedSize(700, 600)  # Фиксированный размер для 3D холста
+        illum3d_layout.addWidget(self.illum3d_canvas)
+        content_layout.addWidget(illum3d_group)
+
+        # 5. Фрейм для статистики
         stats_group = QGroupBox("Статистика Освещенности")
         stats_layout = QVBoxLayout(stats_group)
         self.stats_text = QTextEdit()
         self.stats_text.setReadOnly(True)
-        self.stats_text.setFixedHeight(150)  # Фиксированная высота для статистики, средний размер
+        self.stats_text.setFixedHeight(150)
         stats_layout.addWidget(self.stats_text)
         content_layout.addWidget(stats_group)
 
-        # Добавляем кнопки сохранения в конце, но их можно разместить и по-другому
+        # Добавляем кнопки сохранения
         button_hbox = QHBoxLayout()
-        save_image_button = QPushButton("Сохранить Изображение")
+        save_image_button = QPushButton("Сохранить 2D Изображение")
         save_image_button.clicked.connect(self._save_image)
         button_hbox.addWidget(save_image_button)
 
@@ -158,19 +174,21 @@ class IlluminationApp(QMainWindow):
         save_section_vert_button = QPushButton("Сохранить Вертикальный График")
         save_section_vert_button.clicked.connect(self._save_section_plot_vert)
         button_hbox.addWidget(save_section_vert_button)
+
+        save_illum3d_button = QPushButton("Сохранить 3D График")
+        save_illum3d_button.clicked.connect(self._save_illum3d_plot)
+        button_hbox.addWidget(save_illum3d_button)
+
         content_layout.addLayout(button_hbox)
 
-        content_layout.addStretch(1)  # Заполнитель в конце
+        content_layout.addStretch(1)
 
-        # Оборачиваем ВЕСЬ content_layout в QScrollArea
         scroll_widget = QWidget()
         scroll_widget.setLayout(content_layout)
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(scroll_widget)
 
-        # main_results_layout - это главный макет ДЛЯ САМОЙ ВКЛАДКИ (parent_widget)
-        # И в этот главный макет добавляется ТОЛЬКО QScrollArea
         main_results_layout = QVBoxLayout(parent_widget)
         main_results_layout.addWidget(scroll_area)
 
@@ -191,8 +209,9 @@ class IlluminationApp(QMainWindow):
             # Валидация диапазонов
             if not (100 <= W <= 10000 and 100 <= H <= 10000):
                 raise ValueError("Ширина и высота области должны быть от 100 до 10000 мм.")
-            if not (200 <= Wres <= 800 and 200 <= Hres <= 800):
-                raise ValueError("Разрешение (Wres, Hres) должно быть от 200 до 800 пикселей.")
+            if not (
+                    100 <= Wres <= 800 and 100 <= Hres <= 800):  # Расширим до 100, чтобы иметь возможность небольших разрешений для 3D
+                raise ValueError("Разрешение (Wres, Hres) должно быть от 100 до 800 пикселей.")
             if not (-10000 <= xL <= 10000 and -10000 <= yL <= 10000):
                 raise ValueError("Координаты xL, yL источника должны быть от -10000 до 10000 мм.")
             if not (100 <= zL <= 10000):
@@ -268,6 +287,7 @@ class IlluminationApp(QMainWindow):
                 circle_cx, circle_cy, circle_r
             )
 
+            # Нормализуем для 2D изображения (0-255)
             self.normalized_illumination_image = self.calculator.normalize_illumination(self.raw_illumination_data)
 
             self._display_illumination_image(self.normalized_illumination_image)
@@ -290,6 +310,14 @@ class IlluminationApp(QMainWindow):
                                        "Пиксели по вертикали", "Нормированная освещенность",
                                        "Вертикальное сечение (X=0)")
 
+            # 3D график
+            self._display_3d_plot(
+                self.ax_illum3d, self.fig_illum3d, self.illum3d_canvas,
+                self.raw_illumination_data,
+                x_min, y_min, x_max, y_max,
+                Wres, Hres
+            )
+
             self._update_stats_display(params, x_min, y_min, x_max, y_max)
 
             self.notebook.setCurrentWidget(self.results_tab)  # Переключаемся на вкладку результатов
@@ -301,6 +329,7 @@ class IlluminationApp(QMainWindow):
 
     def _display_illumination_image(self, image_array):
         height, width = image_array.shape
+        # Используем `width` для `bytesPerLine` так как это Grayscale8
         q_image = QImage(image_array.data, width, height, width, QImage.Format.Format_Grayscale8)
         pixmap = QPixmap.fromImage(q_image)
 
@@ -314,7 +343,38 @@ class IlluminationApp(QMainWindow):
         ax.set_ylabel(ylabel)
         ax.set_title(title)
         ax.grid(True)
-        fig.tight_layout()  # Улучшаем расположение элементов графика
+        fig.tight_layout()
+        canvas.draw()
+
+    def _display_3d_plot(self, ax, fig, canvas, illumination_data, x_min, y_min, x_max, y_max, Wres, Hres):
+        ax.clear()
+
+        # Создаем сетку координат для 3D графика
+        # Обратите внимание: X, Y для plot_surface должны быть 2D массивами
+        x = np.linspace(x_min, x_max, Wres)
+        y = np.linspace(y_min, y_max, Hres)
+        X, Y = np.meshgrid(x, y)
+
+        # illumi nation_data уже является 2D массивом (Hres, Wres)
+        # Нужно убедиться, что оси Y и X соответствуют.
+        # Matplotlib plot_surface ожидает Z(row, col) где row - Y, col - X
+        # Если ваш illumination_data получен как E[y, x], то так и оставляем.
+        # Если же illumination_data[x, y], то нужно транспонировать.
+        # В illumination_calculator обычно numpy массивы формируются как [row, col] = [Y, X]
+        Z = illumination_data
+
+        # Отрисовка поверхности
+        surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none')
+
+        ax.set_xlabel("X (мм)")
+        ax.set_ylabel("Y (мм)")
+        ax.set_zlabel("Освещенность (Вт/м²)")
+        ax.set_title("3D Распределение Освещенности")
+
+        # Добавляем цветовую шкалу
+        fig.colorbar(surf, shrink=0.5, aspect=5, label='Освещенность (Вт/м²)')
+
+        fig.tight_layout()
         canvas.draw()
 
     def _update_stats_display(self, params, x_min, y_min, x_max, y_max):
@@ -330,6 +390,10 @@ class IlluminationApp(QMainWindow):
         stats_output.append(f"Центр круга ({circle_cx:.1f}, {circle_cy:.1f}): {e_center:.7f}\n")
 
         # 2. Пересечения круга с осями X и Y (в пределах круга)
+        # Убедимся, что точки находятся в пределах области расчета W x H
+        # Для отображения этих точек в статистике не обязательно, чтобы они были в W x H,
+        # главное, чтобы они были в круге. calculate_point_illumination это уже проверяет.
+
         e_x_plus = self.calculator.calculate_point_illumination(
             circle_cx + circle_r, circle_cy, 0, xL, yL, zL, I0, circle_cx, circle_cy, circle_r
         )
@@ -351,6 +415,7 @@ class IlluminationApp(QMainWindow):
         stats_output.append(f"Пересечение Y- ({circle_cx:.1f}, {circle_cy - circle_r:.1f}): {e_y_minus:.7f}\n")
 
         # 3. Максимальное, минимальное и среднее значения в пределах круга
+        # illumination_data > 0 уже фильтрует те точки, которые были вне круга или имели нулевую освещенность
         illum_values_in_circle = self.raw_illumination_data[self.raw_illumination_data > 0]
 
         max_illum = np.max(illum_values_in_circle) if illum_values_in_circle.size > 0 else 0.0
@@ -410,6 +475,23 @@ class IlluminationApp(QMainWindow):
                 self.fig_section_vert.savefig(file_path)
                 QMessageBox.information(self, "Сохранение",
                                         f"Вертикальный график сечения успешно сохранен в {file_path}")
+            except Exception as e:
+                QMessageBox.critical(self, "Ошибка Сохранения", f"Не удалось сохранить график: {e}")
+
+    def _save_illum3d_plot(self):
+        if self.raw_illumination_data is None:
+            QMessageBox.warning(self, "Нет данных",
+                                "Сначала выполните расчет для создания 3D графика освещенности.")
+            return
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "Сохранить 3D график освещенности", "", "PNG files (*.png);;All files (*.*)"
+        )
+        if file_path:
+            try:
+                self.fig_illum3d.savefig(file_path)
+                QMessageBox.information(self, "Сохранение",
+                                        f"3D график освещенности успешно сохранен в {file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Ошибка Сохранения", f"Не удалось сохранить график: {e}")
 
